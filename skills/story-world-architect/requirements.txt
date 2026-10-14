@@ -1,0 +1,6 @@
+# Python 3.10+. Check dependency licenses before redistribution or deployment.
+# Tested: python-docx 1.2.0, lxml 6.1.1, PyMuPDF 1.28.0.
+python-docx>=1.2.0,<2
+lxml>=6.1.1,<7
+# AGPL or commercial license; see the repository README and upstream license.
+PyMuPDF>=1.28.0,<2

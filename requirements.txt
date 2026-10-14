@@ -1,0 +1,1 @@
+-r skills/story-world-architect/requirements.txt
