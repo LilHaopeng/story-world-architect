@@ -16,9 +16,10 @@ from docx.oxml.ns import qn
 from docx.shared import Pt, RGBColor
 from lxml import etree
 
+from build_reader_docx import OPTIONAL_STYLES, ROLE_STYLES, prepare_reader_styles
 
-ROLES = ("Title", "Cover Subtitle", "Contents Title", "Contents 1", "Contents 2", "Contents 3",
-         "Heading 1", "Heading 2", "Heading 3", "Reading Body")
+
+ROLES = ROLE_STYLES
 
 
 def sanitize_template_metadata(path: Path) -> None:
@@ -83,6 +84,8 @@ def distill(reference: Path, output: Path, evidence: Path | None):
     if doc._element.xpath(".//w:drawing | .//w:pict | .//w:sdt | .//w:txbxContent | .//w:ins | .//w:del | .//w:commentRangeStart"):
         raise ValueError("Reference has unsupported drawings, controls or revisions; inspect it with the documents workflow.")
     for name in ROLES:
+        if name in OPTIONAL_STYLES:
+            continue
         if name not in doc.styles or not any(p.style.name == name for p in doc.paragraphs):
             raise ValueError(f"Missing named reference role: {name}")
 
@@ -90,8 +93,14 @@ def distill(reference: Path, output: Path, evidence: Path | None):
     spacers = [deepcopy(p._p) for p in doc.paragraphs[:first_title] if not p.text.strip()]
     roles = {}
     for name in ROLES:
+        # A three-level reference need not demonstrate fourth-level roles.
+        # Existing unused definitions are preserved, not guessed from other text.
+        if name not in doc.styles:
+            continue
         style = doc.styles[name]
         paragraphs = [p for p in doc.paragraphs if p.style.name == name]
+        if not paragraphs and name in OPTIONAL_STYLES:
+            continue
         if paragraphs[0]._p.pPr is not None:
             target = style._element.get_or_add_pPr()
             for item in paragraphs[0]._p.pPr:
@@ -126,6 +135,8 @@ def distill(reference: Path, output: Path, evidence: Path | None):
             "font": font, "pt": size, "bold": bold, "color": color,
             "paragraph_xml": etree.tostring(style._element.pPr, encoding="unicode") if style._element.pPr is not None else None,
         }
+
+    prepare_reader_styles(doc)
 
     # Source text must not survive in opaque metadata or unused notes.
     for rid, rel in list(doc.part.rels.items()):

@@ -23,7 +23,8 @@ from docx.oxml.ns import qn
 from docx.table import Table
 from docx.text.paragraph import Paragraph
 
-from build_reader_docx import (DEFAULT_TEMPLATE, NS, ROLE_STYLES, parse_markdown,
+from build_reader_docx import (CONTENTS_STYLES, DEFAULT_TEMPLATE, HEADING_STYLES,
+                               NS, ROLE_STYLES, parse_markdown, prepare_reader_styles,
                                paragraph_xml_text, pdf_heading_pages)
 
 FONT_SLOTS = ("ascii", "hAnsi", "eastAsia", "cs")
@@ -99,7 +100,7 @@ def body_stream(document: Any) -> list[dict[str, Any]]:
             paragraph = Paragraph(child, document._body)
             name = paragraph.style.name
             text = paragraph_xml_text(paragraph)
-            if name in ("Heading 1", "Heading 2", "Heading 3"):
+            if name in HEADING_STYLES:
                 stream.append({"kind": "heading", "level": int(name[-1]), "text": text})
             elif name == "Reading Body":
                 numpr = paragraph._p.find("w:pPr/w:numPr", NS)
@@ -117,6 +118,68 @@ def body_stream(document: Any) -> list[dict[str, Any]]:
     return stream
 
 
+def chapter_ending_warnings(rendered: Any, reference: Any,
+                            headings: list[tuple[int, str]], pages: list[int]) -> list[dict[str, Any]]:
+    """Measure rendered body lines at chapter endings, not words or paragraphs.
+
+    The template's body region removes headers/footers. Outline titles remove
+    heading lines (including wrapped titles). Pages preceding the first body
+    heading are cover/contents, outside this check. This is a review heuristic.
+    """
+    if len(pages) != len(headings) or not pages:
+        return []
+    section = reference.sections[0]
+    measured: dict[int, tuple[int, int]] = {}
+    for number in range(pages[0], len(rendered) + 1):
+        page = rendered[number - 1]
+        scale = page.rect.height / section.page_height.pt
+        top = section.top_margin.pt * scale
+        bottom = page.rect.height - section.bottom_margin.pt * scale
+        lines = ["".join(span["text"] for span in line["spans"]).strip()
+                 for block in page.get_text("dict", sort=True)["blocks"]
+                 for line in block.get("lines", [])
+                 if line["bbox"][1] >= top - 2 and line["bbox"][3] <= bottom + 2]
+        lines = [text for text in lines if text]
+        excluded: set[int] = set()
+        # Match complete line groups; never remove an arbitrary body substring.
+        for (_, title), heading_page in zip(headings, pages):
+            if heading_page != number:
+                continue
+            wanted = re.sub(r"\s+", "", title)
+            for start in range(len(lines)):
+                if start in excluded:
+                    continue
+                joined = ""
+                for end in range(start, len(lines)):
+                    if end in excluded:
+                        break
+                    joined += re.sub(r"\s+", "", lines[end])
+                    if joined == wanted:
+                        excluded.update(range(start, end + 1)); break
+                    if not wanted.startswith(joined):
+                        break
+                else:
+                    continue
+                if start in excluded:
+                    break
+        body = [text for index, text in enumerate(lines) if index not in excluded]
+        measured[number] = (sum(len(re.sub(r"\s+", "", text)) for text in body), len(body))
+    chapters = [(title, page) for (level, title), page in zip(headings, pages) if level == 1]
+    nonempty = [page for page, (chars, _) in measured.items() if chars]
+    final_page = max(nonempty, default=pages[-1])
+    result: list[dict[str, Any]] = []
+    for index, (title, start) in enumerate(chapters):
+        is_end = index == len(chapters) - 1
+        end = final_page if is_end else max(start, chapters[index + 1][1] - 1)
+        chars, line_count = measured.get(end, (0, 0))
+        if chars < 200 or line_count < 3:
+            result.append({"chapter": title, "page": end,
+                           "classification": "book_ending" if is_end else "chapter_ending",
+                           "nonspace_body_characters": chars, "body_lines": line_count,
+                           "review_only": True})
+    return result
+
+
 def verify(source: Path, docx: Path, pdf: Path, template: Path = DEFAULT_TEMPLATE) -> dict[str, Any]:
     report: dict[str, Any] = {"ok": False, "errors": [], "warnings": [], "checks": {}, "evidence": {},
                              "validation_scope": "Structural, textual and measurable layout checks only; semantic and visual review remain required."}
@@ -124,6 +187,7 @@ def verify(source: Path, docx: Path, pdf: Path, template: Path = DEFAULT_TEMPLAT
     warnings: list[str] = report["warnings"]
     parsed = parse_markdown(source)
     document = Document(docx); reference = Document(template)
+    prepare_reader_styles(reference)
     report["evidence"]["sha256"] = {"source": sha256(source), "docx": sha256(docx), "pdf": sha256(pdf), "template": sha256(template)}
     report["evidence"]["paths"] = {"source": str(source.resolve()), "docx": str(docx.resolve()),
                                   "pdf": str(pdf.resolve()), "template": str(template.resolve())}
@@ -178,8 +242,8 @@ def verify(source: Path, docx: Path, pdf: Path, template: Path = DEFAULT_TEMPLAT
     except ValueError as exc:
         errors.append(str(exc)); pages = []
         report["checks"]["pdf_outline_sequence"] = False
-    toc = [p for p in document.paragraphs if p.style.name in ("Contents 1", "Contents 2", "Contents 3")]
-    headings = [p for p in document.paragraphs if p.style.name in ("Heading 1", "Heading 2", "Heading 3")]
+    toc = [p for p in document.paragraphs if p.style.name in CONTENTS_STYLES]
+    headings = [p for p in document.paragraphs if p.style.name in HEADING_STYLES]
     all_bookmarks = list(document.element.iter(qn("w:bookmarkStart")))
     names = [x.get(qn("w:name")) for x in all_bookmarks]
     identifiers = [x.get(qn("w:id")) for x in all_bookmarks]
@@ -251,6 +315,12 @@ def verify(source: Path, docx: Path, pdf: Path, template: Path = DEFAULT_TEMPLAT
     pdf_fonts: Counter[str] = Counter()
     with fitz.open(pdf) as rendered:
         report["evidence"]["pdf_pages"] = len(rendered)
+        endings = chapter_ending_warnings(rendered, reference, parsed.headings, pages)
+        report["evidence"]["sparse_chapter_endings"] = endings
+        for ending in endings:
+            label = "Book ending (a short closing page may be intentional)" if ending["classification"] == "book_ending" else "Chapter ending"
+            warnings.append(f"{label}, page {ending['page']}: {ending['nonspace_body_characters']} nonspace body characters, "
+                            f"{ending['body_lines']} rendered body lines; inspect sparse layout. Review only; do not delete text automatically.")
         for page_number, page in enumerate(rendered, 1):
             text = page.get_text()
             chars = len(re.sub(r"\s+", "", text))

@@ -2,7 +2,7 @@
 """Build a reader-facing world book from a deliberately small Markdown subset.
 
 The first # heading is the cover title. Body headings are normalized from either
-#/##/### or ##/###/#### to Heading 1/2/3. Supported body blocks are paragraphs,
+#/##/###/#### or ##/###/####/##### to Heading 1/2/3/4. Supported body blocks are paragraphs,
 flat lists, and pipe tables.
 Inline emphasis and single-backtick code are supported; unsupported Markdown
 fails explicitly. Rendering and visual approval remain separate operations.
@@ -21,18 +21,70 @@ from typing import Any
 
 from docx import Document
 from docx.enum.table import WD_TABLE_ALIGNMENT, WD_CELL_VERTICAL_ALIGNMENT
+from docx.enum.style import WD_STYLE_TYPE
 from docx.enum.text import WD_TAB_ALIGNMENT, WD_TAB_LEADER
 from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
-from docx.shared import Inches, Pt
+from docx.shared import Inches, Pt, RGBColor, Twips
 
 DEFAULT_TEMPLATE = Path(__file__).resolve().parent.parent / "assets" / "reader-template.docx"
 ROLE_STYLES = (
     "Title", "Cover Subtitle", "Contents Title", "Contents 1", "Contents 2",
     "Contents 3", "Heading 1", "Heading 2", "Heading 3", "Reading Body",
+    "Heading 4", "Contents 4",
 )
+OPTIONAL_STYLES = ("Heading 4", "Contents 4")
+HEADING_STYLES = tuple(f"Heading {level}" for level in range(1, 5))
+CONTENTS_STYLES = tuple(f"Contents {level}" for level in range(1, 5))
 SLOTS = ("{{WORLD_TITLE}}", "{{WORLD_SUBTITLE}}", "{{TOC}}", "{{BODY}}")
 NS = {"w": "http://schemas.openxmlformats.org/wordprocessingml/2006/main"}
+
+
+def prepare_reader_styles(document: Any) -> None:
+    """Extend older clean templates without rewriting any existing style.
+
+    Both build and verify use this same conditional derivation, so an older
+    reference remains authoritative for its existing roles and geometry.
+    """
+    missing = [name for name in ROLE_STYLES if name not in OPTIONAL_STYLES and name not in document.styles]
+    if missing:
+        raise ValueError(f"Template is missing required styles: {missing}.")
+    for name, base_name in (("Heading 4", "Heading 3"), ("Contents 4", "Contents 3")):
+        if name in document.styles:
+            continue
+        source = document.styles[base_name]
+        style = document.styles.add_style(name, WD_STYLE_TYPE.PARAGRAPH)
+        style.base_style = source.base_style
+        style.next_paragraph_style = source.next_paragraph_style
+        for tag in ("pPr", "rPr"):
+            node = source.element.find(qn("w:" + tag))
+            if node is not None:
+                style.element.append(deepcopy(node))
+        ppr = style.element.get_or_add_pPr()
+        if name == "Heading 4":
+            style.quick_style = True
+            style.font.size = Pt(12.5)
+            style.font.bold = True
+            style.font.italic = False
+            style.font.color.rgb = RGBColor.from_string("C55A11")
+            style.paragraph_format.keep_with_next = True
+            style.paragraph_format.first_line_indent = 0
+            style.paragraph_format.space_before = Pt(10)
+            style.paragraph_format.space_after = Pt(6)
+            style.paragraph_format.page_break_before = False
+            outline = ppr.find(qn("w:outlineLvl"))
+            if outline is None:
+                outline = OxmlElement("w:outlineLvl"); ppr.append(outline)
+            outline.set(qn("w:val"), "3")
+        else:
+            style.font.size = Pt(10)
+            style.paragraph_format.left_indent = Twips(780)
+            style.paragraph_format.first_line_indent = 0
+        # Match complex-script size to the new role instead of retaining H3/C3.
+        size_cs = style.element.get_or_add_rPr().find(qn("w:szCs"))
+        if size_cs is None:
+            size_cs = OxmlElement("w:szCs"); style.element.rPr.append(size_cs)
+        size_cs.set(qn("w:val"), "25" if name == "Heading 4" else "20")
 
 
 class SourceError(ValueError):
@@ -184,7 +236,7 @@ def parse_markdown(source: Path | str) -> ParsedDocument:
                   if (match := re.fullmatch(r"(#{1,6})\s+(\S.*)", line.strip()))]
     heading_base = min(raw_levels, default=1)
     if heading_base not in (1, 2):
-        raise SourceError("Body headings must start with # or ##; up to three normalized levels are supported.")
+        raise SourceError("Body headings must start with # or ##; up to four normalized levels are supported.")
     previous_level = 0
     i = first + 1
     list_re = re.compile(r"^(?:([-+*])|(\d+)[.)])\s+(\S.*)$")
@@ -197,8 +249,8 @@ def parse_markdown(source: Path | str) -> ParsedDocument:
             raise SourceError(f"Line {number}: unsupported code, quote, image, footnote, math or horizontal rule.")
         if re.match(r"<[/!a-zA-Z]", s) or re.match(r"\[[^\]]+\]:", s):
             raise SourceError(f"Line {number}: HTML and reference links are not supported.")
-        if (match := re.match(r"(#+)\s", s)) and len(match[1]) > heading_base + 2:
-            raise SourceError(f"Line {number}: only three normalized body heading levels are supported.")
+        if (match := re.match(r"(#+)\s", s)) and len(match[1]) > heading_base + 3:
+            raise SourceError(f"Line {number}: only four normalized body heading levels are supported.")
         if line.endswith("  ") or line.endswith("\\"):
             raise SourceError(f"Line {number}: explicit Markdown line breaks are not supported.")
 
@@ -369,9 +421,7 @@ def build(source: Path, out: Path, template: Path = DEFAULT_TEMPLATE,
     if out.resolve() in (source.resolve(), template.resolve()):
         raise ValueError("Output must not overwrite the source Markdown or the template.")
     document = Document(template)
-    missing = [name for name in ROLE_STYLES if name not in document.styles]
-    if missing:
-        raise ValueError(f"Template is missing required styles: {missing}.")
+    prepare_reader_styles(document)
     if len(document.sections) != 1:
         raise ValueError("This basic builder requires a single-section, text-only reader template.")
     slots: dict[str, Any] = {}

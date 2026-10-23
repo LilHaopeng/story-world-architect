@@ -1,4 +1,4 @@
 interface:
   display_name: "小说世界观架构师"
   short_description: "构建可运行的小说世界并制作有生活质感的读者向设定集和 DOCX"
-  default_prompt: "使用 $story-world-architect 先核对世界核心、三级目录与篇幅，再制作有生活质感、规则清楚的读者向世界设定集和 DOCX。"
+  default_prompt: "使用 $story-world-architect 先核对世界核心、创作锚点、按需细至四级的目录与篇幅，再制作有生活质感、规则清楚的读者向世界设定集和 DOCX。"

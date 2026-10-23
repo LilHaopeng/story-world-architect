@@ -14,12 +14,20 @@ from typing import Iterable
 SCOPE_ORDER = {"core": 0, "system": 1, "conflict": 2, "handoff": 3}
 FIELD_RE = re.compile(r"^\s*[-*]\s+(?:\*\*)?([^：:]+?)(?:\*\*)?\s*[：:]\s*(.*?)\s*$")
 HEADING_ID_RE = re.compile(
-    r"^##\s+((?:RULE|INST|FAC|HIST|CON|SEED|WCR)-\d{3})\b.*$",
+    r"^##[ \t]+((?:RULE|INST|FAC|HIST|CON|SEED|WCR|LOOP|REG|CHAR)-\d{3})\b.*$",
     re.IGNORECASE | re.MULTILINE,
 )
+SECTION_RE = re.compile(r"^##[ \t]+([^\n]+)$", re.MULTILINE)
+FENCE_RE = re.compile(r"^ {0,3}(`{3,}|~{3,})(.*)$")
 ANY_ID_RE = re.compile(
-    r"\b(?:RULE|INST|FAC|HIST|CON|SEED|WS|WCR)-\d{3}\b", re.IGNORECASE
+    r"\b(?:RULE|INST|FAC|HIST|CON|SEED|WS|WCR|LOOP|REG|CHAR)-\d{3}\b", re.IGNORECASE
 )
+ANCHOR_FIELDS: dict[str, tuple[str, ...]] = {
+    "ANCHOR-REGIME": ("现实与文化参照", "政体与治理结构", "命名口径", "发表偏好"),
+    "ANCHOR-TIME": ("T0与纪年", "历史分叉", "人物出生与技术时间线"),
+    "ANCHOR-GRIT": ("基调", "救济资格", "救济额度", "救济申请与执行", "代价与受益者"),
+    "ANCHOR-CURRENCY": ("法定货币与相对指数", "锚定地区", "锚定日期", "换算公式", "未知项与未定项"),
+}
 PLACEHOLDER_RE = re.compile(
     r"\[(?:待确认|待补充)\]|\b(?:TODO|TBD)\b|\{[^{}\n]{0,80}\}", re.IGNORECASE
 )
@@ -78,22 +86,54 @@ def add_missing_fields(
     issues: list[Issue],
     root: Path,
     level: str = "error",
+    context: str = "",
 ) -> dict[str, str]:
     found = fields(text)
     for label in required:
         if normalize_label(label) not in found:
             issues.append(
-                Issue(level, "missing_field", relative(path, root), f"缺少字段：{label}")
+                Issue(level, "missing_field", relative(path, root), f"{context}缺少字段：{label}")
             )
     return found
 
 
-def object_blocks(text: str) -> list[tuple[str, str]]:
-    matches = list(HEADING_ID_RE.finditer(text))
+def without_fenced_examples(text: str) -> str:
+    """Keep canonical headings/references outside illustrative fenced code."""
+    result: list[str] = []
+    fence_character = ""
+    fence_length = 0
+    for line in text.splitlines(keepends=True):
+        fence = FENCE_RE.match(line)
+        if fence_character:
+            if (fence and fence.group(1)[0] == fence_character
+                    and len(fence.group(1)) >= fence_length and not fence.group(2).strip()):
+                fence_character = ""
+            result.append("\n" if line.endswith("\n") else "")
+        elif fence:
+            fence_character = fence.group(1)[0]
+            fence_length = len(fence.group(1))
+            result.append("\n" if line.endswith("\n") else "")
+        else:
+            result.append(line)
+    return "".join(result)
+
+
+def section_blocks(text: str) -> list[tuple[str, str]]:
+    text = without_fenced_examples(text)
+    matches = list(SECTION_RE.finditer(text))
     blocks: list[tuple[str, str]] = []
     for index, match in enumerate(matches):
         end = matches[index + 1].start() if index + 1 < len(matches) else len(text)
-        blocks.append((match.group(1).upper(), text[match.start():end]))
+        blocks.append((match.group(1).strip(), text[match.start():end]))
+    return blocks
+
+
+def object_blocks(text: str) -> list[tuple[str, str]]:
+    blocks: list[tuple[str, str]] = []
+    for _, block in section_blocks(text):
+        match = HEADING_ID_RE.match(block)
+        if match:
+            blocks.append((match.group(1).upper(), block))
     return blocks
 
 
@@ -154,6 +194,17 @@ def validate(root: Path, scope: str, strict: bool) -> tuple[list[Issue], dict[st
     require_files(world, scope, issues, root)
     files = world_files(world) if world.exists() else []
     texts = {path: read_text(path, issues, root) for path in files}
+
+    anchor_path = world / "00_创作锚点.md"
+    if anchor_path in texts:
+        anchor_text = texts[anchor_path]
+        add_missing_fields(anchor_path, anchor_text, ("状态", "正典级别"), issues, root)
+        anchors = {name.upper(): block for name, block in section_blocks(anchor_text)}
+        for name, required in ANCHOR_FIELDS.items():
+            if name not in anchors:
+                issues.append(Issue("error", "missing_anchor_section", relative(anchor_path, root), f"缺少创作锚点节：{name}"))
+                continue
+            add_missing_fields(anchor_path, anchors[name], required, issues, root, context=f"{name}：")
 
     field_requirements: dict[str, tuple[str, ...]] = {
         "世界观索引.md": (
@@ -223,6 +274,15 @@ def validate(root: Path, scope: str, strict: bool) -> tuple[list[Issue], dict[st
         "SEED": (
             "ID", "状态", "来源冲突", "类型/情绪回报", "触发器", "为什么是现在", "利益相关者", "个人入口", "初始诱因或损失", "两难选择", "失败代价", "升级向量", "潜在世界状态变化", "依赖", "禁止假设", "不预设的人物决定"
         ),
+        "LOOP": (
+            "ID", "状态", "正典级别", "来源规则或制度", "成立条件", "获利者与受害者", "边界与限制", "代价", "证据或开放问题"
+        ),
+        "REG": (
+            "ID", "状态", "正典级别", "主舞台对照", "共同规则", "差异", "跨境路径", "来源"
+        ),
+        "CHAR": (
+            "ID", "状态", "正典级别", "当前位置", "出生年或年龄", "资源来源", "当前活动", "来源"
+        ),
     }
     for object_id, (path, block) in objects.items():
         prefix = object_id.split("-", 1)[0]
@@ -233,7 +293,7 @@ def validate(root: Path, scope: str, strict: bool) -> tuple[list[Issue], dict[st
         declared = data.get("id", "").upper()
         if declared and object_id not in declared:
             issues.append(Issue("error", "id_heading_mismatch", relative(path, root), f"标题 {object_id} 与 ID 字段 {declared} 不一致。"))
-        if prefix == "RULE":
+        if prefix in {"RULE", "LOOP", "REG", "CHAR"}:
             canon = data.get(normalize_label("正典级别"), "").lower()
             if canon and canon not in {"hard", "soft", "belief", "open", "retired"}:
                 issues.append(Issue("warning", "invalid_canon", relative(path, root), f"{object_id} 的正典级别不在约定枚举中。"))
@@ -250,9 +310,8 @@ def validate(root: Path, scope: str, strict: bool) -> tuple[list[Issue], dict[st
         if match.group(0).upper().startswith("WS-")
     )
     known_ids = set(definitions) | known_ws
-    reference_files = [world / name for name in ("12_结构冲突.md", "13_剧情种子.md", "15_大纲接口.md") if (world / name).exists()]
-    for path in reference_files:
-        text = texts[path]
+    for path, raw_text in texts.items():
+        text = without_fenced_examples(raw_text)
         for match in ANY_ID_RE.finditer(text):
             object_id = match.group(0).upper()
             if object_id.startswith("WCR-"):
@@ -279,6 +338,9 @@ def validate(root: Path, scope: str, strict: bool) -> tuple[list[Issue], dict[st
         "factions": sum(object_id.startswith("FAC-") for object_id in definitions),
         "conflicts": sum(object_id.startswith("CON-") for object_id in definitions),
         "seeds": sum(object_id.startswith("SEED-") for object_id in definitions),
+        "loops": sum(object_id.startswith("LOOP-") for object_id in definitions),
+        "regions": sum(object_id.startswith("REG-") for object_id in definitions),
+        "characters": sum(object_id.startswith("CHAR-") for object_id in definitions),
         "placeholders": placeholder_count,
         "errors": sum(issue.level == "error" for issue in issues),
         "warnings": sum(issue.level == "warning" for issue in issues),

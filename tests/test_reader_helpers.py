@@ -82,7 +82,7 @@ class ReaderHelpersTest(unittest.TestCase):
                    "--root", str(project), "--title", "测试", "--mode", "compact"]
         subprocess.run(command, check=True, capture_output=True)
         before = {p.relative_to(project): p.read_bytes() for p in project.rglob("*.md")}
-        self.assertEqual(len(before), 10)
+        self.assertEqual(len(before), 11)
         subprocess.run(command + ["--audience", "author"], check=True, capture_output=True)
         self.assertEqual(before, {p.relative_to(project): p.read_bytes() for p in project.rglob("*.md")})
         self.assertIn("reader", (project / "设定" / "世界观" / "世界观索引.md").read_text(encoding="utf-8"))
