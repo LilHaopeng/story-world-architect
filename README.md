@@ -1,3 +1,5 @@
+![世界观架构师 · Story World Architect](assets/world-architect-hero.png)
+
 # 小说世界观架构师 · Story World Architect
 
 面向中文小说与原创 IP 的 Codex skill：建立能运转的世界，并把严谨设定编排成有生活质感、适合爱好者阅读的世界设定集。
