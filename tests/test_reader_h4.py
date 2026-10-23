@@ -9,7 +9,10 @@ import unittest
 from docx import Document
 from docx.oxml.ns import qn
 from docx.shared import Pt, RGBColor
-import fitz
+try:
+    import fitz
+except ImportError:
+    fitz = None
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPTS = ROOT / "skills" / "story-world-architect" / "scripts"
@@ -55,6 +58,7 @@ class FourLevelReaderTest(unittest.TestCase):
             with self.subTest(body=body), self.assertRaises(SourceError):
                 self.write_source(body)
 
+    @unittest.skipIf(fitz is None, "Optional PyMuPDF fixture backend is not installed.")
     def test_repeated_long_h4_titles_have_distinct_bookmarks_and_final_pages(self):
         title = "Long fourth heading " * 12
         parsed = self.write_source("# One\n\n## Two\n\n### Three\n\n#### " + title + "\n\nBody A.\n\n#### " + title + "\n\nBody B.")
@@ -100,6 +104,7 @@ class FourLevelReaderTest(unittest.TestCase):
         doc.save(legacy)
         return legacy
 
+    @unittest.skipIf(fitz is None, "Optional PyMuPDF fixture backend is not installed.")
     def test_missing_optional_styles_derive_without_changing_existing_styles(self):
         legacy = self.legacy_template()
         before = Document(legacy)
@@ -116,6 +121,7 @@ class FourLevelReaderTest(unittest.TestCase):
         report = verify(self.source, out, pdf, legacy)
         self.assertTrue(report["ok"], report["errors"])
 
+    @unittest.skipIf(fitz is None, "Optional PyMuPDF fixture backend is not installed.")
     def test_three_level_reference_distills_then_builds_four_levels(self):
         self.write_source("# One\n\n## Two\n\n### Three\n\nBody.")
         legacy = self.legacy_template()
@@ -159,6 +165,7 @@ class FourLevelReaderTest(unittest.TestCase):
         self.assertEqual(str(actual.font.color.rgb), "123456")
         self.assertEqual(actual.paragraph_format.space_after.pt, 8)
 
+    @unittest.skipIf(fitz is None, "Optional PyMuPDF fixture backend is not installed.")
     def test_sparse_chapter_tail_counts_body_lines_and_labels_book_end(self):
         parsed = self.write_source("# First\n\nText.\n\n# Last\n\nClosing text.")
         pdf = self.folder / "tails.pdf"

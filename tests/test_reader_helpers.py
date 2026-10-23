@@ -21,7 +21,10 @@ from build_reader_docx import (DEFAULT_TEMPLATE, ROLE_STYLES, SourceError, build
 from extract_reader_template import sanitize_template_metadata
 from render_pdf_pages import render
 from verify_reader_docx import body_stream, style_fonts, verify
-import fitz
+try:
+    import fitz
+except ImportError:
+    fitz = None
 
 
 class ReaderHelpersTest(unittest.TestCase):
@@ -108,6 +111,7 @@ class ReaderHelpersTest(unittest.TestCase):
             self.assertEqual(before.styles[role].element.xml, after.styles[role].element.xml)
         self.assertEqual(DEFAULT_TEMPLATE.read_bytes(), source_bytes)
 
+    @unittest.skipIf(fitz is None, "Optional PyMuPDF fixture backend is not installed.")
     def test_actual_pdf_page_mapping_and_corruption_detection(self):
         self.source_text("# Test\n\nParagraph.")
         pdf = self.folder / "pages.pdf"
@@ -126,6 +130,7 @@ class ReaderHelpersTest(unittest.TestCase):
         damaged.save(out)
         self.assertFalse(verify(self.source, out, pdf)["ok"])
 
+    @unittest.skipIf(fitz is None, "Optional PyMuPDF fixture backend is not installed.")
     def test_pdf_renderer_refuses_stale_pages(self):
         pdf = self.folder / "pages.pdf"
         with fitz.open() as document:

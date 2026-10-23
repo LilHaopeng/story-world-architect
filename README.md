@@ -2,35 +2,48 @@
 
 # 小说世界观架构师 · Story World Architect
 
-面向中文小说与原创 IP 的 Codex skill：建立能运转的世界，并把严谨设定编排成有生活质感、适合爱好者阅读的世界设定集。
+面向中文小说与原创 IP 的通用 Agent Skill：帮助你构建自洽运转的世界，并将严谨的底层设定编排成有生活质感、适合读者与爱好者阅读的世界设定集。可按 OpenAI Codex、Claude Code、Cursor 等宿主的技能规范安装；脚本运行仍取决于宿主提供的执行权限、依赖与字体。
 
-## 能做什么
+## 核心能力与设计取向
 
-- 从构思新建世界，扩展已有设定，审查规则漏洞，维护正典与时代状态。
-- 推演特殊规则怎样影响地域、生产、组织、权力、阶层、家庭、文化与日常生活。
-- 先核对核心设定、四项创作锚点、按需细至四级的目录和篇幅预算，再填充读者正文；已确认方案不反复询问。
-- 区分作者内部正典和读者成稿。读者版采用理性叙述与少量事务片段，不写成规则字典，也不强制变成小说剧情。
-- 控制连续阅读的信息强度，减少翻译腔、重复判词、人物工具化和机械字段，按内容切换观察方式。
-- 补足制度起源、技术冲击、灰色地带与地域差异，不擅自把世界改成福利乌托邦或强行增加残酷内容。
-- 生成包含封面、最多四级带页码目录及正文的 DOCX，检查源文覆盖、目录跳转、字体与可测布局问题，并告警章末稀疏页。
+- **全周期世界构建**：支持从零构建世界、扩展已有设定、审查规则漏洞，以及随剧情推进维护正典与时代状态。
+- **社会与日常因果推演**：从特殊规则出发，推演其对地域面貌、生产资源、组织权力、阶层流动、家庭结构与日常生活习惯的连锁影响。
+- **创作锚点与目录先行**：动笔前先核对核心命题、四项创作锚点、按需细至四级的目录与篇幅预算；方案确认后连贯推进成稿，避免反复打断。
+- **内部正典与读者成稿分离**：内部维护严密的规则编号、状态与大纲接口；读者版则采用叙述式说明与少量生活片段，既有可读性又保持设定集定位。
+- **自然中文与节奏控制**：控制连续阅读的信息密度，避免机械填表、翻译腔或重复说理，根据空间、制度、历史与人物切换合适的观察视角。
+- **尊重作品基调**：补足制度起源、技术冲击、灰色地带与跨地域差异，贴合你设定的世界冷暖基调与救济尺度，不套用固定模板。
+- **排版构建与核对**：生成带封面、最多四级目录及正文的 DOCX 文档，经 PDF 导出回填真实页码，配合脚本核对文本覆盖、目录跳转与版面边界，再逐页检查视觉效果。
 
-它不直接代写小说章节，也不保证设定天然正确。自动检查不能代替因果推演、连续阅读审查和逐页视觉验收。
+**适用边界**：本技能专注于世界观架构、设定集编排与大纲接口交接，不直接代写小说正文；自动化脚本负责结构、引用与排版数据校验，而世界观的逻辑推演、文风打磨与最终版面效果则由创作者与模型共同把关。
 
-## 安装到 Codex
+## 安装与跨平台支持
 
-在支持 skill-installer 的 Codex 中发送：
+本技能采用 Agent Skills 目录结构（`SKILL.md` + `references/` + `scripts/` + `assets/`）。技能规范可移植，不代表各宿主的安装位置、调用语法或脚本权限完全一致：
 
-```text
-$skill-installer 请从 https://github.com/LilHaopeng/story-world-architect 安装 skills/story-world-architect
-```
+1. **通过 `skill-installer` 安装（OpenAI Codex 等）**
+   ```text
+   $skill-installer 请从 https://github.com/LilHaopeng/story-world-architect 安装 skills/story-world-architect
+   ```
+2. **本地或项目目录安装（Codex / Claude Code / Cursor 等）**
+   克隆本仓库，将 `skills/story-world-architect/` 整个文件夹复制到相应宿主的技能目录：
 
-也可以克隆仓库，将 `skills/story-world-architect/` 整个文件夹复制到当前 Codex 支持的个人或项目 skills 目录。当前官方文档列出的目录包括 `~/.agents/skills/` 和项目的 `.agents/skills/`。请勿覆盖自己改过的同名 skill；更新前保留副本。
+   | 宿主 | 项目目录 | 个人目录 |
+   | --- | --- | --- |
+   | [Codex](https://learn.chatgpt.com/docs/build-skills) | `.agents/skills/` | `~/.agents/skills/` |
+   | [Claude Code](https://code.claude.com/docs/en/skills) | `.claude/skills/` | `~/.claude/skills/` |
+   | [Cursor](https://cursor.com/docs/skills) | `.cursor/skills/` 或 `.agents/skills/` | `~/.cursor/skills/` 或 `~/.agents/skills/` |
 
-安装范围必须包含该文件夹内的 `SKILL.md`、`references/`、`scripts/`、`assets/`、`agents/`、`LICENSE` 和依赖清单，不能只复制入口文件。
+   若本地已有修改过的同名技能，更新前先做好备份。目录规则以对应客户端当前文档为准。
+3. **云端 Agent 技能管理器**
+   按平台要求打包或导入完整的 `skills/story-world-architect` 目录；不要假定平台会自动识别整个仓库中的嵌套技能。云端会话是否加载本地技能、能否执行 Python，须分别核对。
 
-参考：[OpenAI 官方 Skills 文档](https://learn.chatgpt.com/docs/build-skills)。未显示新 skill 时，可重启 Codex。
+复制或导入时请保留完整技能目录（含 `SKILL.md`、`references/`、`scripts/`、`assets/`、`agents/` 等）。`agents/openai.yaml` 是 OpenAI 宿主的可选界面元数据；其他宿主主要读取 `SKILL.md` 及其引用资源。安装后若未显示，请检查目录、权限及宿主的刷新或重启要求。
 
-## 开始使用
+## 快速上手
+
+新建世界设定集：
+
+以下是 Codex 调用示例；Claude Code 可用 `/story-world-architect`，其他宿主按自身技能选择器或调用语法启用。
 
 ```text
 $story-world-architect
@@ -39,33 +52,35 @@ $story-world-architect
 最终希望交付读者向世界设定集 DOCX。
 ```
 
-已有项目可以提供当前正典和参考文档，要求只审查、增量修订或重编读者版。审查和目录讨论不会自动生成 DOCX；锁定正典需要用户明确确认。
+用于已有项目时，可直接提供当前正典或参考文档，指定仅做规则审查、增量修订或重编读者版：
 
-## v1.3.1 更新
+- **日常审查与目录讨论**：直接在对话中完成，仅在你需要交付文档时才生成 DOCX。
+- **版本锁定**：当你确认设定定稿并明确指令锁版时，才会创建正典快照。
 
-本次补强世界的运行机制，不增加固定世界模板：
+## 版本更新
 
-- **资源—权力反馈**：解释优势如何维持、付出什么成本，以及替代、合作或竞争如何改变循环。
-- **条件化链式推演**：追踪成立条件、参与者应对、传播时延与反馈，不把一种技术或能力的后果写成唯一必然。
-- **价值—行为落差**：区分公开规范、实际奖惩、私人信念与受限选择，保留文化内部的分歧。
-- **反事实检查**：按需检查没有主角时世界怎样运转、移除核心设定后哪些选择会改变；不预定剧情，也不要求每个细节直接推动冲突。
+### v1.3.1：深化世界运行机制与多后端沙盒兼容
 
-此版本保留 v1.3.0 的脚本、四级目录与默认排版，不改变既有作品正典。检查方法见 [创作锚点与压力推演](skills/story-world-architect/references/design-anchors.md)。
+在既有工作流基础上强化了社会运行的深层推演，并升级了跨平台 PDF 校验与渲染兼容性，向下兼容已有作品正典、四级目录与默认排版：
 
-## v1.3.0 更新
+- **资源—权力反馈**：梳理优势地位的维持条件与运转成本，推演技术替代、合作或竞争如何打破既有循环。
+- **条件化链式推演**：追踪规则成立的前提、参与者的应对策略与传播时延，呈现多元的演变方向。
+- **价值—行为落差**：区分公开倡导的规范、实际执行的奖惩、私人信念与受限选择，保留文化与阶层内部的真实分歧。
+- **反事实检查**：按需检验“无主角介入时世界如何运转”以及“移除核心设定后哪些选择会改变”，让设定真正融入世界肌理。
+- **多后端 PDF 兼容**：已有 `PyMuPDF (fitz)` 时优先使用；否则分别由 `pypdf` 读取标题大纲、`pdfplumber` 测量真实文字坐标、`pypdfium2` 配合 `Pillow` 渲染页面。另支持 `pdf2image` 渲染，但需要 Poppler。缺少坐标后端时明确报错，不用估算坐标冒充版面校验。
 
-本次采用兼容整合，不将单部作品的专用规则变成默认世界：
+详细推演方法见 [创作锚点与运行机制](skills/story-world-architect/references/design-anchors.md)。
 
-- **四项锚点**：现实与文化参照、T0与历史分岔、基调与救济、货币与相对购买力。可保留未定，不强制公历年、币名或固定金额。
-- **压力推演**：解释制度由谁发起、为何采用或拒绝、技术变化怎样冲击既有义务；按需记录挪用路径 LOOP、地域对照 REG、人物连续性 CHAR。
-- **读者编排**：用具体中文表达，减少同一套正反论证；机制有主要解释位置，地域差异更早说清，人物不反复报幕。
-- **四级排版**：真实 Heading 1–4、Contents 1–4，支持旧干净模板补缺；章末稀疏只告警，不自动删除内容。
+### v1.3.0：创作锚点、读者编排与四级目录
 
-这些是通用工作流，不自动改变已有作品正典。法律、政治、技术和发行要求需要适用范围与依据；不提供“替换关键词即可保证合规”的承诺。
+- **四项创作锚点**：支持核对现实与文化参照、叙事基准时间（T0）与历史分岔、世界基调与救济尺度、货币与相对购买力。未定项可保持开放或使用相对尺度。
+- **制度与压力推演**：补齐制度的发起、采纳与阻力链条，追踪技术变化对既有义务的冲击；支持按需记录漏洞与套利路径（`LOOP`）、地域对照（`REG`）与跨章人物连续性（`CHAR`）。
+- **读者向文风优化**：强化具体、自然的中文表达，集中讲透核心机制，提早点明跨地域差异，让人物自然融入场景与事务。
+- **四级目录与版面告警**：支持 `Heading 1–4` 与 `Contents 1–4` 及旧模板样式补齐；自动提示章末稀疏页，供创作者按需调整。
 
-## 脚本与环境
+## 辅助脚本与环境配置
 
-只使用创作指令时不必运行脚本。辅助脚本使用 Python 3.10+；公开版在 Python 3.14、python-docx 1.2.0、lxml 6.1.1、PyMuPDF 1.28.0 环境中检查。其他平台仍需自行验证字体与版面。
+仅使用对话指令进行世界观推演和文本创作时，无需安装或运行任何 Python 脚本。当你需要自动化正典校验或生成排版级 DOCX 时，可使用配套脚本（需 Python 3.10+）。
 
 从仓库根目录安装依赖：
 
@@ -73,68 +88,82 @@ $story-world-architect
 python -m pip install -r requirements.txt
 ```
 
-在 Codex 提供工作区依赖加载器时，优先使用其解释器和库，不要重复安装或改变全局环境。一般 Python 环境则建议自行创建虚拟环境。
+- **默认依赖**：`python-docx`、`lxml`、`pypdf`、`pdfplumber`、`pypdfium2`、`Pillow`，无需安装 PyMuPDF。
+- **可选后端**：本地已有 `PyMuPDF (fitz)` 时自动优先使用；`pdf2image` 可替代页面渲染，但还需安装 Poppler 并配置 PATH。只有其中任意一个 PDF 包，并不足以完成全套流程。
+- **其他运行条件**：DOCX 转 PDF 仍需 LibreOffice 或其他保留标题书签的导出器；字体、文件权限与宿主执行权限也须就绪。自动回退仅处理后端未安装，不掩盖损坏 PDF 或已安装后端的运行错误。
+- **安装位置**：单独安装技能目录时，运行 `python -m pip install -r <技能目录>/requirements.txt`。仓库根目录的 requirements.txt 会引用同一份依赖清单。
 
-| 脚本 | 用途 |
+| 阶段 | 首选后端（已安装时） | 替代后端与条件 |
+| --- | --- | --- |
+| 标题大纲与页码 | PyMuPDF | pypdf |
+| 文字坐标、字体与稀疏页核对 | PyMuPDF | pdfplumber；不能用 pypdf 的纯文字结果代替坐标 |
+| PDF 逐页 PNG | PyMuPDF | pypdfium2 + Pillow；或 pdf2image + Poppler |
+
+| 脚本 | 功能说明 |
 | --- | --- |
-| `init_world_project.py` | 只创建缺失的内部正典与创作锚点文件，默认读者向 |
-| `validate_world.py` | 核对内部字段、可选锚点、对象 ID 与引用；兼容旧项目 |
-| `lock_world.py` | 经用户确认后创建不可覆盖的正典快照 |
-| `extract_reader_template.py` | 从适用参考提取样式，清理模板内容和元数据 |
-| `build_reader_docx.py` | 将读者 Markdown 编排为 DOCX，按渲染 PDF 同步目录页码 |
-| `verify_reader_docx.py` | 核对文本、目录、跳转、模板格式与可测文字边界 |
-| `render_pdf_pages.py` | 将已导出的 PDF 渲染为逐页 PNG，供人工检查 |
+| `init_world_project.py` | 初始化项目结构，补充缺失的内部正典与创作锚点文件（不覆盖已有原稿） |
+| `validate_world.py` | 校验内部正典字段、创作锚点、对象 ID 与跨文件引用，兼容旧版项目结构 |
+| `lock_world.py` | 在确认定稿后创建不可覆盖的正典版本快照 |
+| `extract_reader_template.py` | 从参考 DOCX 中提取字号、配色与段落样式，生成干净的可复用模板 |
+| `build_reader_docx.py` | 将读者向 Markdown 编译为带封面与目录跳转的 DOCX，并根据渲染 PDF 同步真实页码 |
+| `verify_reader_docx.py` | 核对源文覆盖率、标题层级、目录页码、书签跳转与版面边界，提示章末稀疏页 |
+| `render_pdf_pages.py` | 将导出的 PDF 渲染为逐页 PNG 图像，便于直观检查最终版面 |
 
-具体参数见各脚本的 `--help` 和 [DOCX 交付规范](skills/story-world-architect/references/docx-delivery.md)。
+完整参数说明可查看各脚本的 `--help` 或 [DOCX 交付规范](skills/story-world-architect/references/docx-delivery.md)。
 
-### 不依赖 Codex 专属工具的 DOCX 路线
+### 本地 DOCX 构建与页码同步流程
 
-构建器支持 UTF-8 Markdown 普通段落、最多四级标题、简单列表、行内强调和比较表。图片、嵌套列表、代码块及复杂版式不在支持范围内，会明确拒绝，而不是静默丢弃。
+DOCX 构建器支持标准 UTF-8 Markdown 的正文段落、1–4 级标题、基础列表、行内强调与比较表格（遇到图片、代码块或复杂嵌套格式时会主动提示，避免静默丢失格式）。
 
-以下示例在仓库根目录运行；`worldbook.md` 的第一行是 `# 书名`，正文标题统一使用 `# / ## / ### / ####` 或 `## / ### / #### / #####`。可只用前几级，不可跳级。
+以 `worldbook.md`（首行为 `# 书名`，正文使用连贯的 1–4 级标题）为例，在仓库根目录执行以下流程即可完成构建、真实页码回填与逐页预览（PDF 转换需环境装有 [LibreOffice](https://help.libreoffice.org/latest/en-US/text/shared/guide/start_parameters.html) 或支持保留书签的导出工具）：
 
 ```bash
+# 1. 初次构建 DOCX（此时目录页码为占位符）
 python skills/story-world-architect/scripts/build_reader_docx.py --source worldbook.md --out worldbook.docx
 
-# 需另行安装 LibreOffice，并使 soffice 命令可用。
+# 2. 导出首轮 PDF 以计算真实排版页码
 mkdir -p qa/round1 qa/round2
 soffice --headless --convert-to pdf --outdir qa/round1 worldbook.docx
 
+# 3. 根据首轮 PDF 回填真实目录页码，并生成最终 PDF
 python skills/story-world-architect/scripts/build_reader_docx.py --source worldbook.md --out worldbook.docx --pages-from-pdf qa/round1/worldbook.pdf
 soffice --headless --convert-to pdf --outdir qa/round2 worldbook.docx
 
+# 4. 校验文档完整性并渲染逐页预览图
 python skills/story-world-architect/scripts/verify_reader_docx.py --source worldbook.md --docx worldbook.docx --pdf qa/round2/worldbook.pdf --report qa/check.json
 python skills/story-world-architect/scripts/render_pdf_pages.py --pdf qa/round2/worldbook.pdf --out qa/round2-pages
 ```
 
-首次构建的页码是占位值，不能交付。若回填后实际页码变化，继续用最新 PDF 回填并渲染到新目录，直到验证通过；最后逐页检查 PNG。Word 等其他导出器必须保留标题书签，验证器才可按 PDF 大纲核对页码。
+以上命令示例使用 Bash；PowerShell 用户可用 `New-Item -ItemType Directory -Force qa/round1, qa/round2` 创建目录，并按本机安装位置调用 LibreOffice。若回填后分页变化，应继续用最新 PDF 回填、重新导出并核对，直到页码稳定；两轮并不保证收敛。
 
-LibreOffice 有时会受正在运行的实例或旧输出影响；使用新的 QA 目录，必要时按其官方说明设置独立用户配置。转换方式见 [LibreOffice 官方命令行文档](https://help.libreoffice.org/latest/en-US/text/shared/guide/start_parameters.html)。本仓库不分发 LibreOffice、Codex 的 documents 技能或其专属渲染器。
+## 默认排版与自定义模板
 
-## 默认排版
+内置默认模板（[reader-template.docx](skills/story-world-architect/assets/reader-template.docx)）可直接使用：
 
-正文微软雅黑 12 磅，四级标题 18/16/14/12.5 磅，目录项 12/11/10.5/10 磅，第四级标题为琥珀金棕 C55A11，含页眉和页码。用户的新模板优先，不将默认纸张、配色或篇幅当作不可改规则。
+- **字体与字号**：正文采用微软雅黑 12 磅，四级标题分别为 18 / 16 / 14 / 12.5 磅，目录项为 12 / 11 / 10.5 / 10 磅。
+- **视觉细节**：第四级标题采用琥珀金棕（`#C55A11`）点缀，自带页眉与页码。
 
-模板仅引用字体名称，不包含字体文件。没有对应字体时会发生替换，不能保证与参考相同的分页；请使用合法具备的字体，或提供自己的参考模板并重新渲染验收。
+如果你有偏好的排版风格，可通过 `extract_reader_template.py` 提取自己的参考文档样式并优先应用。由于模板仅记录字体名称，跨设备渲染时请确保本地已安装对应字体，以获得一致的分页效果。
 
-## 隐私与数据
+## 数据隐私与本地运行
 
-仓库只包含通用工作流程、脚本和空白模板。辅助脚本在本地处理文件，不主动上传原稿；使用 Codex 或其他模型服务时，数据处理遵循相应产品和你的设置。
-
-提取证据和 QA 报告可能记录本地绝对路径，不应直接公开。发布时排除缓存、原稿、备份和测试输出；清理元数据并不等于完成正文中的个人信息脱敏。
+- **本地处理**：所有辅助脚本均在本地或当前沙盒内读写文件，不会上传你的设定原稿；你的原创世界观与文稿版权完全归你个人所有。
+- **分享提示**：自动生成的验证报告（如 `artifact.json`、`check.json`）及 `qa/` 目录可能包含本地文件路径，公开分享或提交代码前建议将测试输出与个人原稿排除在外。
 
 ## 测试与贡献
+
+运行单元测试：
 
 ```bash
 python -B -m unittest discover -s tests -v
 ```
 
-测试覆盖辅助工具的可观察行为，不代表一整本设定集的文学质量或所有排版场景。欢迎提交问题和改进；请使用最小复现文本，不要提交私人原稿、密钥或未获授权的第三方内容。
+默认依赖即可运行新增的替代后端回归用例。部分历史 PDF 夹具使用可选的 PyMuPDF：未安装时这些用例会明确跳过；如需完整执行它们，可另行安装 PyMuPDF，并核对其上游许可。替代后端测试会主动屏蔽 fitz，避免因环境预装 PyMuPDF 而漏测回退路线。
+
+本次验证范围是 Windows 下的脚本回归与后端切换，不等于已在 Claude Code、Cursor、所有云端沙盒或其他操作系统中完成端到端验收。
+
+欢迎提交 Issue 或 Pull Request 分享改进建议。反馈排版或脚本问题时，附上最小复现文本即可，无需提供私人原稿。
 
 ## 许可证
 
-本仓库的指令、原创脚本和通用模板使用 [MIT License](LICENSE)，Copyright © 2026 LilHaopeng。创作流程经过 AI 辅助整理；本仓库不是 OpenAI 官方产品。
-
-MIT 不替代依赖软件或字体的许可。尤其 [PyMuPDF／MuPDF 使用 AGPL 或商业许可](https://pymupdf.readthedocs.io/en/latest/about.html#license-and-copyright)，使用、分发或服务化相关功能时须核对并遵守适用条款；本仓库不分发其二进制代码，也不将其改标为 MIT。python-docx、lxml、LibreOffice 和字体同样保留各自许可。
-
-许可覆盖发布的 skill 内容，不把使用者的原稿、原创世界观或小说自动纳入本仓库许可，也不要求使用者公开自己的创作。
+本仓库的创作规范、原创脚本与通用模板采用 [MIT License](LICENSE) 开源（Copyright © 2026 LilHaopeng）。第三方依赖及其随附组件保留各自的许可，不因本仓库采用 MIT 而改变；分发或部署时请核对实际安装版本的许可与声明。可选 [PyMuPDF](https://pymupdf.readthedocs.io/en/latest/about.html) 后端遵循其上游许可条件，不包含在本仓库的 MIT 授权中。

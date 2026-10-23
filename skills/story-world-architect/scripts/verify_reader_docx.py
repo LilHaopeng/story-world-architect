@@ -17,7 +17,81 @@ from pathlib import Path
 from typing import Any
 from xml.etree import ElementTree as ET
 
-import fitz
+try:
+    import fitz
+except ImportError:
+    fitz = None  # type: ignore[assignment]
+
+
+class _FallbackRect:
+    def __init__(self, width: float, height: float) -> None:
+        self.width = float(width)
+        self.height = float(height)
+
+
+class _FallbackPage:
+    def __init__(self, width: float, height: float, text: str, lines: list[dict[str, Any]]) -> None:
+        self.rect = _FallbackRect(width, height)
+        self._text = text
+        self._lines = lines
+        self._spans: list[dict[str, Any]] = []
+
+    def get_text(self, mode: str = "text", sort: bool = False) -> Any:
+        if mode == "dict":
+            if not sort:
+                return {"blocks": [{"lines": [{"spans": self._spans}]}]}
+            lines = sorted(self._lines, key=lambda l: (l["bbox"][1], l["bbox"][0])) if sort else self._lines
+            return {"blocks": [{"lines": lines}]}
+        return self._text
+
+
+class _FallbackDocument:
+    def __init__(self, pdf: Path) -> None:
+        self.pdf = pdf
+        self._pages: list[_FallbackPage] = []
+
+    def __enter__(self) -> _FallbackDocument:
+        try:
+            import pdfplumber
+        except ImportError as exc:
+            raise RuntimeError("Layout verification requires PyMuPDF (fitz) or pdfplumber; pypdf alone cannot measure text bounds.") from exc
+        with pdfplumber.open(str(self.pdf)) as doc:
+            for page in doc.pages:
+                # Preserve real PDF character bounds and mixed-font lines. Never
+                # invent positions from plain extracted text to claim layout QA.
+                spans = [{"text": char.get("text", ""), "font": char.get("fontname", "unknown"),
+                          "bbox": tuple(float(char[key]) for key in ("x0", "top", "x1", "bottom"))}
+                         for char in page.chars]
+                raw_lines = page.extract_text_lines() or []
+                lines = [{"bbox": tuple(float(line[key]) for key in ("x0", "top", "x1", "bottom")),
+                          "spans": [{"text": line.get("text", ""), "font": "unknown",
+                                     "bbox": tuple(float(line[key]) for key in ("x0", "top", "x1", "bottom"))}]}
+                         for line in raw_lines]
+                # Unsorted access is for glyph bounds/font inventory; sorted
+                # access is for the rendered-line chapter-ending heuristic.
+                self._pages.append(_FallbackPage(float(page.width), float(page.height), page.extract_text() or "", lines))
+                self._pages[-1]._spans = spans
+        return self
+
+    def __exit__(self, exc_type: Any, exc: Any, tb: Any) -> None:
+        pass
+
+    def __len__(self) -> int:
+        return len(self._pages)
+
+    def __getitem__(self, index: int) -> _FallbackPage:
+        return self._pages[index]
+
+    def __iter__(self) -> Any:
+        return iter(self._pages)
+
+
+def _open_pdf(pdf: Path) -> Any:
+    if fitz is not None:
+        return fitz.open(pdf)
+    return _FallbackDocument(pdf)
+
+
 from docx import Document
 from docx.oxml.ns import qn
 from docx.table import Table
@@ -313,7 +387,8 @@ def verify(source: Path, docx: Path, pdf: Path, template: Path = DEFAULT_TEMPLAT
     boundary: list[dict[str, Any]] = []
     sparse: list[dict[str, Any]] = []
     pdf_fonts: Counter[str] = Counter()
-    with fitz.open(pdf) as rendered:
+    with _open_pdf(pdf) as rendered:
+        report["evidence"]["pdf_layout_backend"] = "pymupdf" if fitz is not None else "pdfplumber"
         report["evidence"]["pdf_pages"] = len(rendered)
         endings = chapter_ending_warnings(rendered, reference, parsed.headings, pages)
         report["evidence"]["sparse_chapter_endings"] = endings
@@ -361,7 +436,7 @@ def main() -> int:
     args = parser.parse_args()
     try:
         result = verify(args.source, args.docx, args.pdf, args.template)
-    except (OSError, ValueError, KeyError, zipfile.BadZipFile, ET.ParseError) as exc:
+    except (OSError, ValueError, RuntimeError, KeyError, zipfile.BadZipFile, ET.ParseError) as exc:
         result = {"ok": False, "errors": [str(exc)], "warnings": [],
                   "validation_scope": "Verification could not complete; no semantic or visual approval."}
     output = json.dumps(result, ensure_ascii=False, indent=2)

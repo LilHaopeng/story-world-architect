@@ -334,20 +334,50 @@ def parse_markdown(source: Path | str) -> ParsedDocument:
     return ParsedDocument(title, blocks)
 
 
+def _extract_pdf_outline(pdf: Path | str) -> tuple[list[list[Any]], int]:
+    try:
+        import fitz
+    except ImportError:
+        fitz = None  # type: ignore[assignment]
+    if fitz is not None:
+        with fitz.open(pdf) as document:
+            if document.needs_pass:
+                raise ValueError("Encrypted PDFs must be unlocked before reading outlines.")
+            return document.get_toc(simple=True), len(document)
+    try:
+        import pypdf
+    except ImportError as exc:
+        raise RuntimeError("Neither PyMuPDF (fitz) nor pypdf is installed.") from exc
+    reader = pypdf.PdfReader(str(pdf))
+    if reader.is_encrypted:
+        raise ValueError("Encrypted PDFs must be unlocked before reading outlines.")
+
+    def walk(items: list[Any], level: int = 1) -> list[list[Any]]:
+        entries: list[list[Any]] = []
+        for item in items:
+            if isinstance(item, list):
+                entries.extend(walk(item, level + 1))
+            else:
+                page_idx = reader.get_destination_page_number(item)
+                page_num = (page_idx + 1) if page_idx is not None else -1
+                entries.append([level, item.title or "", page_num])
+        return entries
+
+    return walk(reader.outline), len(reader.pages)
+
+
 def pdf_heading_pages(pdf: Path | str, headings: list[tuple[int, str]]) -> list[int]:
-    import fitz
-    with fitz.open(pdf) as document:
-        outline = document.get_toc(simple=True)
-        if len(outline) != len(headings):
-            raise ValueError(f"PDF outline has {len(outline)} entries; source has {len(headings)} headings.")
-        pages: list[int] = []
-        for index, ((level, title), entry) in enumerate(zip(headings, outline), 1):
-            if level != entry[0] or normalized_heading(title) != normalized_heading(entry[1]):
-                raise ValueError(f"PDF outline entry {index} differs: expected ({level}, {title!r}); got {entry[:2]!r}.")
-            if not 1 <= entry[2] <= len(document):
-                raise ValueError(f"PDF outline entry {index} has an invalid page: {entry[2]}.")
-            pages.append(entry[2])
-        return pages
+    outline, total_pages = _extract_pdf_outline(pdf)
+    if len(outline) != len(headings):
+        raise ValueError(f"PDF outline has {len(outline)} entries; source has {len(headings)} headings.")
+    pages: list[int] = []
+    for index, ((level, title), entry) in enumerate(zip(headings, outline), 1):
+        if level != entry[0] or normalized_heading(title) != normalized_heading(entry[1]):
+            raise ValueError(f"PDF outline entry {index} differs: expected ({level}, {title!r}); got {entry[:2]!r}.")
+        if not 1 <= entry[2] <= total_pages:
+            raise ValueError(f"PDF outline entry {index} has an invalid page: {entry[2]}.")
+        pages.append(entry[2])
+    return pages
 
 
 def paragraph_xml_text(paragraph: Any) -> str:
@@ -548,7 +578,7 @@ def main() -> int:
     args = parser.parse_args()
     try:
         result = build(args.source, args.out, args.template, args.subtitle, args.pages_from_pdf)
-    except (OSError, ValueError, KeyError) as exc:
+    except (OSError, ValueError, RuntimeError, KeyError) as exc:
         print(f"ERROR: {exc}", file=sys.stderr); return 2
     print(json.dumps(result, ensure_ascii=False, indent=2))
     return 0
