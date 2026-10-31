@@ -16,6 +16,8 @@
 
 **适用边界**：本技能负责世界观构建、设定集编排与大纲接口交接，不直接代写小说正文。创作与语义审查由作者及模型完成；脚本承担下文明确列出的结构、引用、文档构建与排版数据校验工作。大纲规划与编辑请参阅 [大纲架构师 · Story Outline Architect](https://github.com/LilHaopeng/story-outline-architect)。
 
+**配套创作流程**：世界观架构师负责世界规则与设定，大纲架构师负责故事结构与章纲，[正文写作 · Story Prose Writer](https://github.com/LilHaopeng/story-prose-writer) 根据已有世界观和大纲进行文风校准、正文撰写与连续性审校。三个技能可独立使用，也可按项目需要衔接。
+
 ## 安装与跨平台支持
 
 本技能采用 Agent Skills 目录结构（`SKILL.md` + `references/` + `scripts/` + `assets/`）。技能规范可移植，不代表各宿主的安装位置、调用语法或脚本权限完全一致：
