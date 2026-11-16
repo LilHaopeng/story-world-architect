@@ -87,13 +87,25 @@ class FourLevelReaderTest(unittest.TestCase):
         h4 = doc.styles["Heading 4"]
         self.assertEqual(h4.font.size.pt, 12.5)
         self.assertTrue(h4.font.bold)
-        self.assertEqual(str(h4.font.color.rgb), "C55A11")
+        self.assertEqual(str(h4.font.color.rgb), "9C4A1A")
         self.assertEqual(h4.element.find("w:pPr/w:outlineLvl", {"w": qn("w:p").split("}")[0][1:]}).get(qn("w:val")), "3")
         self.assertTrue(h4.paragraph_format.keep_with_next)
         self.assertEqual(h4.paragraph_format.first_line_indent, 0)
         c4 = doc.styles["Contents 4"]
         self.assertEqual(c4.font.size.pt, 10)
         self.assertEqual(c4.paragraph_format.left_indent.twips, 780)
+        body = doc.styles["Reading Body"]
+        self.assertEqual(body.font.name, "宋体")
+        self.assertEqual(body.font.size.pt, 11.5)
+
+    @unittest.skipIf(fitz is None, "Optional PyMuPDF fixture backend is not installed.")
+    def test_english_toc_title_roundtrip(self):
+        parsed = self.write_source("# Chapter One\n\n## Section Two\n\nEnglish worldbook body.")
+        pdf = self.pdf(parsed.headings, [3, 3])
+        out = self.folder / "english_worldbook.docx"
+        build(self.source, out, subtitle="World Compendium", pages_from_pdf=pdf, toc_title="Contents")
+        report = verify(self.source, out, pdf, toc_title="Contents")
+        self.assertTrue(report["ok"], report["errors"])
 
     def legacy_template(self):
         legacy = self.folder / "legacy.docx"

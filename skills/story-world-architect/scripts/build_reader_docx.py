@@ -66,11 +66,11 @@ def prepare_reader_styles(document: Any) -> None:
             style.font.size = Pt(12.5)
             style.font.bold = True
             style.font.italic = False
-            style.font.color.rgb = RGBColor.from_string("C55A11")
+            style.font.color.rgb = RGBColor.from_string("9C4A1A")
             style.paragraph_format.keep_with_next = True
             style.paragraph_format.first_line_indent = 0
             style.paragraph_format.space_before = Pt(10)
-            style.paragraph_format.space_after = Pt(6)
+            style.paragraph_format.space_after = Pt(5)
             style.paragraph_format.page_break_before = False
             outline = ppr.find(qn("w:outlineLvl"))
             if outline is None:
@@ -444,12 +444,15 @@ def add_toc_entry(anchor: Any, level: int, title: str, page: int, target: str, w
 
 
 def build(source: Path, out: Path, template: Path = DEFAULT_TEMPLATE,
-          subtitle: str = "世界设定集", pages_from_pdf: Path | None = None) -> dict[str, Any]:
+          subtitle: str = "世界设定集", pages_from_pdf: Path | None = None,
+          toc_title: str = "目录") -> dict[str, Any]:
     parsed = parse_markdown(source)
     if not parsed.headings:
         raise SourceError("A world book needs at least one body heading for its contents.")
     if out.resolve() in (source.resolve(), template.resolve()):
         raise ValueError("Output must not overwrite the source Markdown or the template.")
+    if not toc_title or not toc_title.strip():
+        raise ValueError("toc_title must not be empty.")
     document = Document(template)
     prepare_reader_styles(document)
     if len(document.sections) != 1:
@@ -476,7 +479,7 @@ def build(source: Path, out: Path, template: Path = DEFAULT_TEMPLATE,
                     if rpr is not None:
                         run._r.insert(0, rpr)
     body_anchor = slots["{{BODY}}"]
-    fill_paragraph(slots["{{TOC}}"], "目录")
+    fill_paragraph(slots["{{TOC}}"], toc_title.strip())
     toc_anchor = body_anchor.insert_paragraph_before()
     section = document.sections[0]
     width = section.page_width - section.left_margin - section.right_margin
@@ -574,10 +577,11 @@ def main() -> int:
     parser.add_argument("--out", required=True, type=Path)
     parser.add_argument("--template", type=Path, default=DEFAULT_TEMPLATE)
     parser.add_argument("--subtitle", default="世界设定集")
+    parser.add_argument("--toc-title", default="目录", help="Visible table-of-contents heading (e.g. '目录' or 'Contents')")
     parser.add_argument("--pages-from-pdf", type=Path)
     args = parser.parse_args()
     try:
-        result = build(args.source, args.out, args.template, args.subtitle, args.pages_from_pdf)
+        result = build(args.source, args.out, args.template, args.subtitle, args.pages_from_pdf, args.toc_title)
     except (OSError, ValueError, RuntimeError, KeyError) as exc:
         print(f"ERROR: {exc}", file=sys.stderr); return 2
     print(json.dumps(result, ensure_ascii=False, indent=2))

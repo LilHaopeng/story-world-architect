@@ -254,7 +254,8 @@ def chapter_ending_warnings(rendered: Any, reference: Any,
     return result
 
 
-def verify(source: Path, docx: Path, pdf: Path, template: Path = DEFAULT_TEMPLATE) -> dict[str, Any]:
+def verify(source: Path, docx: Path, pdf: Path, template: Path = DEFAULT_TEMPLATE,
+           toc_title: str | None = None) -> dict[str, Any]:
     report: dict[str, Any] = {"ok": False, "errors": [], "warnings": [], "checks": {}, "evidence": {},
                              "validation_scope": "Structural, textual and measurable layout checks only; semantic and visual review remain required."}
     errors: list[str] = report["errors"]
@@ -308,8 +309,9 @@ def verify(source: Path, docx: Path, pdf: Path, template: Path = DEFAULT_TEMPLAT
     if len(covers) != 1 or paragraph_xml_text(covers[0]) != parsed.title:
         errors.append("Cover title differs from the source title or is duplicated/missing.")
     contents_titles = [p for p in document.paragraphs if p.style.name == "Contents Title"]
-    if len(contents_titles) != 1 or paragraph_xml_text(contents_titles[0]) != "目录":
-        errors.append("Visible contents title is missing or duplicated.")
+    valid_toc_titles = {toc_title.strip()} if toc_title else {"目录", "Contents"}
+    if len(contents_titles) != 1 or paragraph_xml_text(contents_titles[0]) not in valid_toc_titles:
+        errors.append("Visible contents title is missing, duplicated, or does not match expected TOC heading.")
     try:
         pages = pdf_heading_pages(pdf, parsed.headings)
         report["checks"]["pdf_outline_sequence"] = True
@@ -432,10 +434,11 @@ def main() -> int:
     parser.add_argument("--docx", required=True, type=Path)
     parser.add_argument("--pdf", required=True, type=Path)
     parser.add_argument("--template", type=Path, default=DEFAULT_TEMPLATE)
+    parser.add_argument("--toc-title", default=None, help="Expected visible TOC heading (defaults to accepting '目录' or 'Contents')")
     parser.add_argument("--report", type=Path)
     args = parser.parse_args()
     try:
-        result = verify(args.source, args.docx, args.pdf, args.template)
+        result = verify(args.source, args.docx, args.pdf, args.template, args.toc_title)
     except (OSError, ValueError, RuntimeError, KeyError, zipfile.BadZipFile, ET.ParseError) as exc:
         result = {"ok": False, "errors": [str(exc)], "warnings": [],
                   "validation_scope": "Verification could not complete; no semantic or visual approval."}

@@ -29,7 +29,7 @@ author 完整汇编按对象 ID 集合核对 RULE、INST、FAC、HIST、CON、SE
 
 有 documents 技能和工作区依赖加载器时使用它们，并遵守其制作、操作标记和渲染要求。普通环境可使用 Python 3.10+ 和本技能的 requirements.txt；DOCX 转 PDF 需另行具备 LibreOffice 或保留标题书签的其他导出器。本技能不分发专属 documents 渲染器、Office 软件或字体。用户指定模板/样本为设计权威，读取其实际显示格式；局部 run 属性可能覆盖 Word 样式默认值。无新样本时用 `assets/reader-template.docx` 和 [reader-layout.md](reader-layout.md)。
 
-本技能默认样式是用户确认的阅读排版：微软雅黑正文 12 磅，一/二/三/四级标题 18/16/14/12.5 磅，四级为加粗琥珀金棕 C55A11；目录项实际显示为 12/11/10.5/10 磅，第四级左缩进 780 twip。页面几何、其他缩进、段距、行距、配色、页眉页码从模板继承。保留真实 Heading 1—4 和 Contents 1—4，不用 Heading 3 的局部加粗伪装第四级。人物标题默认含性别、年龄和职业/身份。
+本技能默认样式采用克制的书籍级阅读排版：A4 页面，宋体正文 11.5 磅（暖墨黑 `#222222`，首行缩进 2 字符），微软雅黑一/二/三/四级标题 18/15.5/13.5/12.5 磅（依次采用墨黛蓝 `#1B263B`、黛蓝 `#2B4C7E`、玄青灰 `#3D405B` 与赭石暗金 `#9C4A1A`）；目录项实际显示为 12/11/10.5/10 磅，第四级左缩进 780 twip。页面几何、其他缩进、段距、行距、配色、页眉页码从模板继承。保留真实 Heading 1—4 和 Contents 1—4，不用 Heading 3 的局部加粗伪装第四级。人物标题默认含性别、年龄和职业/身份。
 
 旧的干净模板若缺少第四级角色，构建器会补充缺失样式；已有角色不覆盖，用户的既有 Heading 4 可能需要先调整。新用户参考优先于默认规范；缺失样式的扩展也须随最终样本核验，不能因 Word 自带同名样式就假定实际格式正确。标题应与下段保持，不用额外空段模拟段距。
 
@@ -59,7 +59,7 @@ python <skill-dir>/scripts/extract_reader_template.py --reference <参考.docx> 
 python <skill-dir>/scripts/build_reader_docx.py --source <正文.md> --out <成稿.docx>
 ```
 
-默认使用随技能安装的模板。`--template <另一干净模板.docx>` 采用已提取的同槽位模板；`--subtitle` 可改副标题。初次构建的目录页码只供排版，不能直接交付。
+默认使用随技能安装的模板。`--template <另一干净模板.docx>` 采用已提取的同槽位模板；`--subtitle` 可改副标题；英文或其他语种设定集可通过 `--toc-title Contents` 切换目录标题。初次构建的目录页码只供排版，不能直接交付。
 
 有 documents 时使用其 `render_docx.py --emit_pdf` 渲染到新 QA 目录；普通环境可执行 `soffice --headless --convert-to pdf --outdir <新QA目录> <成稿.docx>`。确认 PDF 由当前文件导出并保留标题大纲，再按实际标题页码重建：
 

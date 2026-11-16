@@ -56,12 +56,13 @@ def module_template(name: str) -> str:
 """
 
 
-def templates(title: str, mode: str, audience: str = "reader") -> dict[str, str]:
+def templates(title: str, mode: str, audience: str = "reader", lang: str = "简体中文") -> dict[str, str]:
     prefix = "设定/世界观/"
     base: dict[str, str] = {
         prefix + "世界观索引.md": f"""# 世界观索引
 
 - 项目名：{title}
+- 写作语言：{lang}
 - 深度：{mode}
 - 世界观状态：draft
 - 当前版本：v0.1
@@ -314,6 +315,13 @@ def templates(title: str, mode: str, audience: str = "reader") -> dict[str, str]
 - 禁止提前成立的技术/制度/关系：[待确认]
 - 禁止把 belief 当 hard truth 的条目：[待确认]
 
+## 语言与日常肌理切片（供正文与对白调用）
+
+- 常见称谓与社交礼数：[待确认]
+- 市井俗谚与行业行话：[待确认]
+- 日常饮食器物与感官锚点：[待确认]
+- 时代违和词与出戏禁区：[待确认]
+
 ## 世界状态读取点
 
 | State ID | 开篇状态 | 大纲可施加的压力 | 可能变化方向 | 必须记录的二阶后果 |
@@ -368,6 +376,7 @@ def main() -> int:
     )
     parser.add_argument("--dry-run", action="store_true", help="Show actions without writing")
     parser.add_argument("--audience", choices=("reader", "author", "handoff"), default="reader", help="Intended deliverable; does not change canon validation")
+    parser.add_argument("--lang", default="简体中文", help="Default authoring language recorded in index (default: 简体中文)")
     args = parser.parse_args()
 
     try:
@@ -375,7 +384,7 @@ def main() -> int:
     except ValueError as exc:
         parser.error(str(exc))
 
-    files = templates(args.title.strip() or "未命名小说", args.mode, args.audience)
+    files = templates(args.title.strip() or "未命名小说", args.mode, args.audience, args.lang.strip() or "简体中文")
     world = root / "设定" / "世界观"
     directories = {world, world / "版本"}
     if args.mode == "deep":
