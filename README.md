@@ -4,7 +4,7 @@
 
 **简体中文** | [English](README_EN.md)
 
-面向长篇小说与原创 IP 的世界构建 Agent Skill：建立规则、生产、权力、家庭与时代变迁的深层因果，并将严谨的内部设定编排成有烟火气、书籍观感舒适的读者向世界设定集（DOCX）。当前版本 **v1.4.0**。
+面向长篇小说与原创 IP 的世界构建 Agent Skill：建立规则、生产、权力、家庭与时代变迁的深层因果，并将严谨的内部设定编排成有烟火气、书籍观感舒适的读者向世界设定集（DOCX）。当前版本 **v1.4.1**。
 
 默认采用**简体中文**推演与成稿；同时支持按你的要求切换为**英文（English）**、**繁体中文**或其他语言起笔，自动匹配目标语种的叙述语感与目录标题规范。
 
@@ -20,11 +20,16 @@
 
 ## 配套创作工作流
 
-三个同系列技能既可独立使用，也可串联成完整的小说创作管线：
+同系列六大技能既可独立使用，也可按体量与媒介串联成完整的小说与短剧创作管线：
 
-1. **小说世界观架构师 · Story World Architect**：构建世界规则、社会生态、读者设定集与下游交接接口。
-2. [小说大纲架构师 · Story Outline Architect](https://github.com/LilHaopeng/story-outline-architect)：引用世界正典与冲突种子，设计故事弧、剧情段与具象章纲。
-3. [小说正文写作 · Story Prose Writer](https://github.com/LilHaopeng/story-prose-writer)：调用世界语言肌理与章纲，完成声口校准、正文撰写与跨章连续性审校。
+- **长篇与精品小说三件套**
+  1. **小说世界观架构师 · Story World Architect**：构建世界规则、社会生态、读者设定集与下游交接接口。
+  2. [小说大纲架构师 · Story Outline Architect](https://github.com/LilHaopeng/story-outline-architect)：引用世界正典与冲突种子，设计故事弧、剧情段与具象章纲。
+  3. [小说正文写作 · Story Prose Writer](https://github.com/LilHaopeng/story-prose-writer)：调用世界语言肌理与章纲，完成声口校准、正文撰写与跨章连续性审校。
+- **市场雷达、高概念短篇与 AI 短剧工作流**
+  4. [网文与短剧市场雷达 · Webnovel Market Radar](https://github.com/LilHaopeng/webnovel-market-radar)：短篇网文、长篇网文与 AI 短剧/漫剧三轨实时扫榜与选题简报生成。
+  5. [短篇网文与微短剧爽文创作室 · Webnovel Short Studio](https://github.com/LilHaopeng/webnovel-short-studio)：5 万字以内高概念脑洞短篇（盐选/番茄短故事）与微短剧式分章爽文一体化创作。
+  6. [AI 短剧与沙雕短剧编剧室 · AI Drama Script Studio](https://github.com/LilHaopeng/ai-drama-script-studio)：原生及小说改编 AI 短剧（MiniMax-H3）、2D/3D 高奇观漫剧与沙雕短剧视听剧本工作室。
 
 ## 安装方式
 
@@ -57,6 +62,11 @@ Design a seasonal archipelago world in English. Review the core rules, four anch
 ```
 
 ## 版本亮点
+
+### v1.4.1：去机械节拍约束与有机叙事分布
+
+- **有机章节编排与防同质化**：移除对生活切片与表格频率的机械硬性配额，改为按章节内容密度自然交替长短段落、制度推演与市井切片，防止多部设定集呈现同一种固定模具感。
+- **全生态接口联动**：无缝衔接上游 `webnovel-market-radar` 长篇选题简报与下游 `ai-drama-script-studio` IP 漫剧改编。
 
 ### v1.4.0：书籍级排版美学、下游语言肌理交接与多语种支持
 

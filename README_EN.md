@@ -4,7 +4,7 @@
 
 [简体中文](README.md) | **English**
 
-A comprehensive worldbuilding Agent Skill for fiction and original IP: builds causally grounded worlds across geography, production, institutions, social classes, and everyday life, then compiles rigorous internal canon into an engaging, book-styled reader compendium (DOCX). Current version: **v1.4.0**.
+A comprehensive worldbuilding Agent Skill for fiction and original IP: builds causally grounded worlds across geography, production, institutions, social classes, and everyday life, then compiles rigorous internal canon into an engaging, book-styled reader compendium (DOCX). Current version: **v1.4.1**.
 
 By default, the skill reasons and writes in **Simplified Chinese (`简体中文`)**. You can explicitly ask to start or write in **English**, **Traditional Chinese**, or any other language—the skill adapts its prose register, cultural framing, and table-of-contents headings (`--toc-title Contents`) accordingly.
 
@@ -19,11 +19,16 @@ By default, the skill reasons and writes in **Simplified Chinese (`简体中文`
 
 ## Companion Studio Pipeline
 
-Each skill works standalone or as part of a connected three-stage novel pipeline:
+Each skill works standalone or as part of a connected fiction & AI-drama studio ecosystem:
 
-1. **Story World Architect**: Establishes world rules, social ecosystems, reader worldbooks, and downstream handoff contracts.
-2. [Story Outline Architect](https://github.com/LilHaopeng/story-outline-architect): Consumes world rules and conflict seeds to architect Story DNA, multi-track arcs, sequences, and chapter outlines.
-3. [Story Prose Writer](https://github.com/LilHaopeng/story-prose-writer): Draws on world vernacular slices and chapter outlines to calibrate voice, write natural chapters, and maintain continuity.
+- **Long-Form & Literary Novel Suite**
+  1. **Story World Architect**: Establishes world rules, social ecosystems, reader worldbooks, and downstream handoff contracts.
+  2. [Story Outline Architect](https://github.com/LilHaopeng/story-outline-architect): Consumes world rules and conflict seeds to architect Story DNA, multi-track arcs, sequences, and chapter outlines.
+  3. [Story Prose Writer](https://github.com/LilHaopeng/story-prose-writer): Draws on world vernacular slices and chapter outlines to calibrate voice, write natural chapters, and maintain continuity.
+- **Market Radar, High-Concept Short Fiction & AI Drama Suite**
+  4. [Webnovel Market Radar](https://github.com/LilHaopeng/webnovel-market-radar): Tri-track market ranking scanner and topic-brief generator across short webnovels, serialized long webnovels, and AI short dramas / comic dramas.
+  5. [Webnovel Short Studio](https://github.com/LilHaopeng/webnovel-short-studio): High-concept short webnovel & micro-drama fiction studio (under 50k words) with mobile-first pacing.
+  6. [AI Drama Script Studio](https://github.com/LilHaopeng/ai-drama-script-studio): Original & adapted AI short drama (MiniMax-H3), 2D/3D comic drama, and comedy short drama scriptwriting studio.
 
 ## Installation
 
