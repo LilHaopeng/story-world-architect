@@ -2,7 +2,7 @@
 name: story-world-architect
 description: 设计、审查、修订小说世界观，建立规则、社会生活与时代变化的因果系统，并制作易读的读者向世界设定集及经过渲染核对的 DOCX；默认使用简体中文写作，支持按用户要求以英文或其他语言起笔，也支持作者手册、正典管理与大纲/正文语言肌理交接。不用于直接写小说章节。
 metadata:
-  version: 1.5.0
+  version: 1.5.1
 ---
 
 # 小说世界观架构师
@@ -42,7 +42,7 @@ metadata:
 
 核对四项创作锚点：现实/文化参照与表述要求、叙事基准时间（T0）与历史分岔、世界基调与救济尺度、货币与购买力口径。读 [design-anchors.md](references/design-anchors.md)；未定项记为 `open`，支持相对时间与相对尺度。
 
-阅读 [reader-edition.md](references/reader-edition.md) 设计 reader 目录、文风、视觉节律与人物切面；维护内部正典时阅读 [world-contract.md](references/world-contract.md)。
+阅读 [reader-edition.md](references/reader-edition.md) 与 [naming-and-titling.md](references/naming-and-titling.md) 设计 reader 目录、书名/标题气质、人物命名配额、文风与视觉节律；维护内部正典时阅读 [world-contract.md](references/world-contract.md)。
 
 ### 2. 建立世界常态和规则后果
 
@@ -64,7 +64,7 @@ metadata:
 
 - **单世界声口与母语自然度（防千书一面与过度去味）**：写作前先按本世界题材与气质定调叙述声口（如冷峻史志、市井烟火、诡谲志怪或明快游记），避免所有设定集滑向同一副“克制政策散文腔”。优先让人、机构、物件作主语并发出动作，消除高频空主语、层层名词化与反复的“能做 X，不能替人做 Y”判词；**严禁搞机械禁词或一刀切句式禁令**，正常抽象限定、生动比喻与流利长句按需保留。
 - **自然阅读呼吸（防机械套模）**：避免连续数页等长论述段造成的沉闷感，根据章节内容自然切换饱满说明、短生活事务切片、必要对照小表或风物白描；不强求固定比例，也不必每章套用“小切片→制度解释→边界总结”的单一三段式，更不要为了“去说明感”把本该一气呵成的机制阐释切碎。
-- **人物生活位置**：人物介绍呈现当前处境、资源来路、非工作关系与可选择空间（内部可用 `CHAR-NNN` 追踪一致性，编号不进入 reader 正文）。
+- **人物生活位置与去 AI 味命名**：人物介绍呈现当前处境、资源来路、非工作关系与可选择空间（内部可用 `CHAR-NNN` 追踪一致性，编号不进入 reader 正文）；核心角色与短事务切片中的基层路人均严守 [naming-and-titling.md](references/naming-and-titling.md) 的题材/阶层姓氏配额与龙套降噪规则，避免全员文艺姓或高频意象字堆砌。
 
 ### 5. 下游交接与多维审查
 

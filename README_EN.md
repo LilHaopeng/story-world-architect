@@ -4,7 +4,7 @@
 
 [简体中文](README.md) | **English**
 
-A comprehensive worldbuilding Agent Skill for fiction and original IP: builds causally grounded worlds across geography, production, institutions, social classes, and everyday life, then compiles rigorous internal canon into an engaging, book-styled reader compendium (DOCX). Current version: **v1.4.1**.
+A comprehensive worldbuilding Agent Skill for fiction and original IP: builds causally grounded worlds across geography, production, institutions, social classes, and everyday life, then compiles rigorous internal canon into an engaging, book-styled reader compendium (DOCX). Current version: **v1.5.1**.
 
 By default, the skill reasons and writes in **Simplified Chinese (`简体中文`)**. You can explicitly ask to start or write in **English**, **Traditional Chinese**, or any other language—the skill adapts its prose register, cultural framing, and table-of-contents headings (`--toc-title Contents`) accordingly.
 
@@ -15,6 +15,7 @@ By default, the skill reasons and writes in **Simplified Chinese (`简体中文`
 - **Four Design Anchors & Upfront Blueprint**: Aligns cultural/historical reference points, baseline time (`T0`), grit & relief scale, currency/purchasing-power index, and up to four TOC levels before drafting full chapters.
 - **Internal Canon vs. Reader Compendium**: Maintains structured IDs (`RULE`, `INST`, `FAC`, `CON`, `SEED`, `LOOP`, `REG`, `CHAR`) on the author workbench while presenting smooth, human-centered prose and concrete everyday vignettes to readers.
 - **Downstream Vernacular & Sensory Handoff**: Exports forms of address, street idioms, trade jargon, everyday utensils/foods, and anachronism taboos via `15_大纲接口.md` so downstream outlines and chapter prose sound lived-in from page one.
+- **Anti-AI Character Naming & Concise Title Standards**: Enforces genre-calibrated surname quotas across six branches (modern, historical, wuxia/xianxia, sci-fi, fantasy), blocks overused literary-surname + cliché-character combinations, keeps walk-on vignettes grounded, and promotes concise, concrete compendium & TOC headings ([naming-and-titling.md](skills/story-world-architect/references/naming-and-titling.md)).
 - **Book-Grade DOCX Compilation & Layout QA**: Ships with a clean A4 editorial template (serif body, sans-serif hierarchy, restrained ink-navy / indigo / charcoal / ochre-bronze palette), syncs real PDF bookmark page numbers, verifies glyph bounds, and renders page-by-page PNGs for visual inspection.
 
 ## Companion Studio Pipeline

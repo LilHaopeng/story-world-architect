@@ -102,7 +102,7 @@ def templates(title: str, mode: str, audience: str = "reader", lang: str = "简�
 
 - 现实与文化参照：[待确认]
 - 政体与治理结构：[待确认]
-- 命名口径：[待确认]
+- 命名口径：[待确认]（参考 references/naming-and-titling.md 锁定人物命名题材分支 A–F 与地域/阶层习惯）
 - 发表偏好：[待确认]
 
 ## ANCHOR-TIME
